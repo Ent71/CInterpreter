@@ -1,0 +1,14 @@
+line: 1
+row: 1, column: 1 val: Write
+row: 1, column: 7 val: ewe
+row: 1, column: 11 val: 123
+row: 1, column: 15 val: 1212
+row: 1, column: 22 val: (
+row: 1, column: 23 val: )
+row: 1, column: 25 val: +
+row: 1, column: 27 val: -
+row: 1, column: 28 val: /
+row: 1, column: 30 val: *
+row: 1, column: 31 val: ;
+line: 2
+row: 1, column: 32 val: =

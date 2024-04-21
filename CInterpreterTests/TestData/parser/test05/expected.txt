@@ -1,0 +1,44 @@
+line: 1
+row: 0, column: 0 val: Statement
+..row: 1, column: 1 val: InitialisationStatement
+....row: 1, column: 1 val: InitialisationList
+......row: 1, column: 1 val: Initialisation
+........row: 1, column: 1 val: a
+........row: 1, column: 3 val: =
+........row: 1, column: 5 val: Expression
+..........row: 1, column: 5 val: SimpleExpression
+............row: 1, column: 5 val: 1
+..........row: 1, column: 7 val: Operation
+............row: 1, column: 7 val: /
+..........row: 1, column: 9 val: SimpleExpression
+............row: 1, column: 9 val: 2
+line: 2
+row: 0, column: 0 val: Statement
+..row: 2, column: 1 val: InitialisationStatement
+....row: 2, column: 1 val: InitialisationList
+......row: 2, column: 1 val: Initialisation
+........row: 2, column: 1 val: a
+........row: 2, column: 3 val: =
+........row: 2, column: 5 val: Expression
+..........row: 2, column: 5 val: SimpleExpression
+............row: 2, column: 5 val: Function
+..............row: 2, column: 5 val: Read
+..........row: 2, column: 12 val: Operation
+............row: 2, column: 12 val: /
+..........row: 2, column: 14 val: SimpleExpression
+............row: 2, column: 14 val: 2
+line: 3
+row: 0, column: 0 val: Statement
+..row: 3, column: 1 val: ExpressionStatement
+....row: 3, column: 1 val: Expression
+......row: 3, column: 1 val: SimpleExpression
+........row: 3, column: 1 val: Function
+..........row: 3, column: 1 val: Write
+..........row: 3, column: 7 val: Arguments
+............row: 3, column: 7 val: Expression
+..............row: 3, column: 7 val: SimpleExpression
+................row: 3, column: 7 val: 1
+..............row: 3, column: 9 val: Operation
+................row: 3, column: 9 val: +
+..............row: 3, column: 11 val: SimpleExpression
+................row: 3, column: 11 val: a

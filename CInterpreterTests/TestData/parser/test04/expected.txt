@@ -1,0 +1,20 @@
+line: 1
+row: 0, column: 0 val: Statement
+..row: 1, column: 1 val: ExpressionStatement
+....row: 1, column: 1 val: Expression
+......row: 1, column: 1 val: SimpleExpression
+........row: 1, column: 1 val: Function
+..........row: 1, column: 1 val: Write
+..........row: 1, column: 7 val: Arguments
+............row: 1, column: 7 val: Expression
+..............row: 1, column: 7 val: SimpleExpression
+................row: 1, column: 7 val: 1
+............row: 1, column: 10 val: Expression
+..............row: 1, column: 10 val: SimpleExpression
+................row: 1, column: 10 val: 2
+............row: 1, column: 13 val: Expression
+..............row: 1, column: 13 val: SimpleExpression
+................row: 1, column: 13 val: 3
+............row: 1, column: 16 val: Expression
+..............row: 1, column: 16 val: SimpleExpression
+................row: 1, column: 16 val: 4

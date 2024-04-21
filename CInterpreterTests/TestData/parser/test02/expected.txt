@@ -1,0 +1,11 @@
+line: 1
+row: 0, column: 0 val: Statement
+..row: 1, column: 1 val: InitialisationStatement
+....row: 1, column: 1 val: InitialisationList
+......row: 1, column: 1 val: Initialisation
+........row: 1, column: 1 val: a
+........row: 1, column: 3 val: =
+........row: 1, column: 5 val: Expression
+..........row: 1, column: 5 val: SimpleExpression
+............row: 1, column: 5 val: Function
+..............row: 1, column: 5 val: Read

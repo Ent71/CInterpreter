@@ -1,0 +1,77 @@
+line: 1
+row: 1, column: 1 val: Write
+row: 1, column: 6 val: (
+row: 1, column: 7 val: Input 3 numbers:
+row: 1, column: 25 val: )
+row: 1, column: 26 val: ;
+line: 2
+row: 2, column: 1 val: Int
+row: 2, column: 5 val: i
+row: 2, column: 6 val: ,
+row: 2, column: 8 val: j
+row: 2, column: 9 val: ,
+row: 2, column: 11 val: k
+row: 2, column: 12 val: ;
+line: 3
+row: 3, column: 1 val: i
+row: 3, column: 3 val: =
+row: 3, column: 5 val: Read
+row: 3, column: 9 val: (
+row: 3, column: 10 val: )
+row: 3, column: 11 val: ;
+line: 4
+row: 4, column: 1 val: j
+row: 4, column: 3 val: =
+row: 4, column: 5 val: Read
+row: 4, column: 9 val: (
+row: 4, column: 10 val: )
+row: 4, column: 11 val: ;
+line: 5
+row: 5, column: 1 val: k
+row: 5, column: 3 val: =
+row: 5, column: 5 val: Read
+row: 5, column: 9 val: (
+row: 5, column: 10 val: )
+row: 5, column: 11 val: ;
+line: 6
+row: 6, column: 1 val: Int
+row: 6, column: 5 val: result
+row: 6, column: 11 val: ;
+line: 7
+row: 7, column: 1 val: result
+row: 7, column: 8 val: =
+row: 7, column: 10 val: i
+row: 7, column: 12 val: +
+row: 7, column: 14 val: k
+row: 7, column: 15 val: ;
+line: 8
+row: 8, column: 1 val: Write
+row: 8, column: 6 val: (
+row: 8, column: 7 val: i
+row: 8, column: 8 val: )
+row: 8, column: 9 val: ;
+line: 9
+row: 9, column: 1 val: result
+row: 9, column: 8 val: =
+row: 9, column: 10 val: result
+row: 9, column: 17 val: *
+row: 9, column: 19 val: k
+row: 9, column: 20 val: ;
+line: 10
+row: 10, column: 1 val: Write
+row: 10, column: 6 val: (
+row: 10, column: 7 val: j
+row: 10, column: 8 val: )
+row: 10, column: 9 val: ;
+line: 11
+row: 11, column: 1 val: Write
+row: 11, column: 6 val: (
+row: 11, column: 7 val: k
+row: 11, column: 8 val: )
+row: 11, column: 9 val: ;
+line: 12
+row: 12, column: 1 val: Write
+row: 12, column: 6 val: (
+row: 12, column: 7 val: result
+row: 12, column: 13 val: )
+row: 12, column: 14 val: ;
