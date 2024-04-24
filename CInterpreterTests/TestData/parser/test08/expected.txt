@@ -1,0 +1,2 @@
+Parser Error: Expected Identifier or Keyword on row: 1, column 8
+Parser Error: Expected Initialization on row: 1, column 8

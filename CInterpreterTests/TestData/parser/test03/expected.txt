@@ -1,7 +1,5 @@
 line: 1
-row: 0, column: 0 val: Statement
+row: 1, column: 1 val: Statement
 ..row: 1, column: 1 val: ExpressionStatement
-....row: 1, column: 1 val: Expression
-......row: 1, column: 1 val: SimpleExpression
-........row: 1, column: 1 val: Function
-..........row: 1, column: 1 val: Read
+....row: 1, column: 1 val: Function
+......row: 1, column: 1 val: Read

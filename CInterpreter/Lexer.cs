@@ -1,16 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CInterpreter.Models;
 
 namespace CInterpreter
 {
     public class Lexer : ILexer
     {
+        private string errorMessage = "";
+        private List<Tocken> tockenRow = new List<Tocken>();
+        private InterpreterContext context;
+        private int identifierID = 1;
+
+        public IReadOnlyList<Tocken> TockenRow { get { return tockenRow; } }
+
         public Lexer(InterpreterContext context)
         {
             this.context = context;
+        }
+
+        public void Reset()
+        {
+            errorMessage = "";
+            tockenRow.Clear();
+            context.Reset();
+            identifierID = 1;
         }
 
         public bool LexerAnalis(StreamReader sr, ref int row, ref int column)
@@ -39,7 +56,6 @@ namespace CInterpreter
                         sb.Append(symbol.Character);
                     }
                     tockenRow.Add(new DigitTocken(Int32.Parse(sb.ToString()), row, startColumn));
-                    // column++;
                 }
                 else if (char.IsLetter(symbol.Character))
                 {
@@ -50,7 +66,7 @@ namespace CInterpreter
                         column++;
                         sb.Append(symbol.Character);
                     }
-                    // column++;
+
                     string str = sb.ToString();
                     if (context.keyWordTable.ContainsKey(str))
                     {
@@ -74,7 +90,7 @@ namespace CInterpreter
 
 
                 }
-                else if (symbol.Character == '\"') // TODO: \n
+                else if (symbol.Character == '\"')
                 {
                     bool inStr = true;
                     startColumn = column;
@@ -95,10 +111,8 @@ namespace CInterpreter
                         }
                         else
                         {
-                            inStr = false;
-                            errorMessage = string.Format("Lexer Error: Not closed \'\"\' line: {1}, column: {2}", symbol.Character, row, startColumn);
+                            SaveLexerError(string.Format("Not closed '\"'"), row, startColumn);
                             return false;
-
                         }
                     }
                     symbol.Read(sr);
@@ -123,6 +137,7 @@ namespace CInterpreter
                     {
                         if (symbol.Read(sr) && symbol.Character == '/')
                         {
+                            context.endOfRowPositions.Add(column - 1);
                             do
                             {
                             } while (symbol.Read(sr) && symbol.Character != '\n');
@@ -144,6 +159,7 @@ namespace CInterpreter
                 {
                     if (symbol.Character == '\n')
                     {
+                        context.endOfRowPositions.Add(column);
                         row++;
                         column = 0;
                     }
@@ -151,7 +167,7 @@ namespace CInterpreter
                 }
                 else
                 {
-                    errorMessage = string.Format("Lexer Error: Unexpected character: \'{0}\' line: {1}, column: {2}", symbol.Character, row, column);
+                    SaveLexerError(string.Format("Unexpected character: \'{0}\'", symbol.Character), row, column);
                     return false;
                 }
 
@@ -160,11 +176,6 @@ namespace CInterpreter
             }
             return true;
         }
-
-        //public void TockenRowDump(int line, StreamWriter output)
-        //{
-        //    TockenRowDump(line, output);
-        //}
         public void TockenRowDump(TextWriter output)
         {
             foreach (Tocken tocken in tockenRow)
@@ -172,6 +183,11 @@ namespace CInterpreter
                 context.DumpTocken(tocken, output);
                 output.WriteLine();
             }
+        }
+
+        private void SaveLexerError(string message, int row, int column)
+        {
+            errorMessage = string.Format("Lexer Error: {0} line: {1}, column: {2}", message, row, column);
         }
 
         public void dumpError(TextWriter output)
@@ -186,13 +202,5 @@ namespace CInterpreter
         {
             return c == '-' || c == '+' || c == '*' || c == '/';
         }
-        private string errorMessage = "";
-        public IReadOnlyList<Tocken> TockenRow { get { return tockenRow; } }
-
-        private List<Tocken> tockenRow = new List<Tocken>();
-
-        private InterpreterContext context;
-
-        private int identifierID = 1;
     }
 }

@@ -1,0 +1,3 @@
+Parser Error: Expected Expression on row: 1, column 9
+Parser Error: Expected Function Argument on row: 1, column 7
+Parser Error: Expected ')' on row: 1, column 7

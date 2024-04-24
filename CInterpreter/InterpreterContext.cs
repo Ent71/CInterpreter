@@ -10,6 +10,22 @@ namespace CInterpreter
     
     public class InterpreterContext
     {
+        public Dictionary<string, KeyWordTocken.KeyWordID> keyWordTable = new Dictionary<string, KeyWordTocken.KeyWordID> { { "int", KeyWordTocken.KeyWordID.Int },
+                                                                                                                            { "Read", KeyWordTocken.KeyWordID.Read },
+                                                                                                                            { "Write", KeyWordTocken.KeyWordID.Write } };
+        public Dictionary<string, int> identifierToId = new Dictionary<string, int>();
+        public Dictionary<int, string> idToIdentifier = new Dictionary<int, string>();
+        public List<int> endOfRowPositions = new List<int>();
+        public List<KeyWordTocken.KeyWordID> functionWithVoidReturnType = new List<KeyWordTocken.KeyWordID> { { KeyWordTocken.KeyWordID.Write } };
+        public List<KeyWordTocken.KeyWordID> functionWithIntReturnType = new List<KeyWordTocken.KeyWordID> { { KeyWordTocken.KeyWordID.Read } };
+
+        public void Reset()
+        {
+            identifierToId.Clear();
+            idToIdentifier.Clear();
+            endOfRowPositions.Clear();
+        }
+
         public void DumpTocken(Tocken tocken, TextWriter output)
         {
             output.Write("row: {0}, column: {1} ", tocken.row, tocken.column);
@@ -41,11 +57,5 @@ namespace CInterpreter
                     break;
             }
         }
-
-        public Dictionary<string, KeyWordTocken.KeyWordID> keyWordTable = new Dictionary<string, KeyWordTocken.KeyWordID> { { "int", KeyWordTocken.KeyWordID.Int }, 
-                                                                                                                            { "Read", KeyWordTocken.KeyWordID.Read }, 
-                                                                                                                            { "Write", KeyWordTocken.KeyWordID.Write } };
-        public Dictionary<string, int> identifierToId = new Dictionary<string, int>();
-        public Dictionary<int, string> idToIdentifier = new Dictionary<int, string>();
     }
 }

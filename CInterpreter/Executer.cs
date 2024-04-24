@@ -1,25 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CInterpreter.Models;
 
 namespace CInterpreter
 {
-    internal class Executer : IExecuter
+    public class Executer : IExecuter
     {
+        private Dictionary<int, int> intVars = new Dictionary<int, int>();
+        private InterpreterContext context;
         private IReadable read;
         private IWritable write;
-        private int row;
+        private string errorMessage = "";
+
         public Executer(InterpreterContext context, IReadable read, IWritable write)
         {
             this.context = context;
             this.read = read;
             this.write = write;
         }
-        public bool ExecuteProgram(TreeNode node, int row)
+
+        public void Reset()
         {
-            this.row = row;
+            errorMessage = "";
+            intVars.Clear();
+            context.Reset();
+        }
+
+        public bool ExecuteProgram(TreeNode node)
+        {
+            errorMessage = "";
+            if(!ExecuteStatement(node))
+            {
+                if (errorMessage == "")
+                {
+                    SaveExecuterError("Parser and Executor mismatch", node.Tocken.row, node.Tocken.column);
+                }
+                return false;
+            }
+            return true;
+        }
+
+        private bool ExecuteStatement(TreeNode node)
+        {
             if (node.Children.Count() == 1 && node.Children[0].Tocken is ParserTocken)
             {
                 switch (((ParserTocken)node.Children[0].Tocken).parseTocken)
@@ -32,13 +58,17 @@ namespace CInterpreter
                         return ExecuteExpressionStatement(node.Children[0]);
                 }
             }
-            
+
             return false;
         }
 
         bool ExecuteExpressionStatement(TreeNode node)
         {
-            return ExecuteFunctionExpresion(node);
+            if(node.Children.Count() == 1)
+            {
+                return ExecuteFunctionExpresion(node.Children[0]);
+            }
+            return false;
         }
 
         bool ExecuteDeclarationStatement(TreeNode node)
@@ -60,15 +90,25 @@ namespace CInterpreter
             {
                 if (declaration.Children.Count() == 1)
                 {
-                    ChecIsVariableDeclare(declaration.Children[0]);
+                    if(!ChecIsVariableDeclare(declaration.Children[0]))
+                    {
+                        return false;
+                    }
                 }
-                else
+                if (declaration.Children.Count() == 3)
                 {
                     int? value = ExecuteDigitExpresion(declaration.Children[2]);
                     if (value != null)
-                        ChecIsVariableDeclare(declaration.Children[0], (int)value);
+                    {
+                        if(!ChecIsVariableDeclare(declaration.Children[0], (int)value))
+                        {
+                            return false;
+                        }
+                    }
                     else
+                    {
                         return false;
+                    }
                 }
             }
             return true;
@@ -81,6 +121,7 @@ namespace CInterpreter
                 intVars.Add(((IdentifierTocken)node.Tocken).ID, value);
                 return true;
             }
+            SaveExecuterError("Variable already declared", node.Tocken.row, node.Tocken.column);
             return false;
         }
 
@@ -105,9 +146,17 @@ namespace CInterpreter
                 {
                     int? value = ExecuteDigitExpresion(declaration.Children[2]);
                     if (value != null)
-                        CheckIsVariableInitialisation(declaration.Children[0], (int)value);
+                    {
+
+                        if(!CheckIsVariableInitialisation(declaration.Children[0], (int)value))
+                        {
+                            return false;
+                        }
+                    }
                     else
+                    {
                         return false;
+                    }
                 }
             }
             return true;
@@ -120,6 +169,7 @@ namespace CInterpreter
                 intVars[((IdentifierTocken)node.Tocken).ID] = value;
                 return true;
             }
+            SaveExecuterError("Undeclared variable", node.Tocken.row, node.Tocken.column);
             return false;
         }
 
@@ -144,6 +194,11 @@ namespace CInterpreter
                         case '*':
                             return leftDgt * rightDgt;
                         case '/':
+                            if (rightDgt == 0)
+                            {
+                                SaveExecuterError("Division by zero", intExpr.Tocken.row, intExpr.Tocken.column);
+                                return null;
+                            }
                             return leftDgt / rightDgt;
                     }
                 }
@@ -153,12 +208,12 @@ namespace CInterpreter
 
         bool ExecuteFunctionExpresion(TreeNode node)
         {
-            ParserTocken? func = node.Children[0].Tocken as ParserTocken;
+            ParserTocken? func = node.Tocken as ParserTocken;
             if (func != null && func.parseTocken == ParserTocken.ParserStages.Function)
             {
-                return ExecuteWrite(node.Children[0]);
+                return ExecuteFunction(node);
             }
-            return true;
+            return false;
         }
 
         int? ExecuteSimpleDigitExpresion(TreeNode node)
@@ -170,18 +225,64 @@ namespace CInterpreter
                     return ((DigitTocken)node.Children[0].Tocken).digitValue;
                 }
                 IdentifierTocken? id = node.Children[0].Tocken as IdentifierTocken;
-                if (id != null && intVars.TryGetValue(id.ID, out int value))
+                if (id != null)
                 {
-                    return value;
+                    if(intVars.TryGetValue(id.ID, out int value))
+                    {
+                        return value;
+                    }
+                    else
+                    {
+                        SaveExecuterError("Undeclared variable", node.Tocken.row, node.Tocken.column);
+                        return null;
+                    }
                 }
 
                 ParserTocken? func = node.Children[0].Tocken as ParserTocken;
                 if (func != null && func.parseTocken == ParserTocken.ParserStages.Function)
                 {
-                    return ExecuteRead(node.Children[0]);
+                    return ExecuteIntFunction(node.Children[0]);
                 }
             }
             return null;
+        }
+
+        bool ExecuteFunction(TreeNode node)
+        {
+            if(IsStandartFunc(node, KeyWordTocken.KeyWordID.Write))
+            {
+                return ExecuteWrite(node);
+            }
+            if (IsStandartFunc(node, KeyWordTocken.KeyWordID.Read))
+            {
+                return ExecuteRead(node) == null ? false : true;
+            }
+
+            SaveExecuterError("Undefined function", node.Tocken.row, node.Tocken.column); 
+            return false;
+        }
+
+        int? ExecuteIntFunction(TreeNode node)
+        {
+            if (IsStandartFunc(node, KeyWordTocken.KeyWordID.Read))
+            {
+                return ExecuteRead(node);
+            }
+
+            SaveExecuterError("Expected \'Read\'", node.Tocken.row, node.Tocken.column);
+            return null;
+        }
+        bool IsStandartFunc(TreeNode node, KeyWordTocken.KeyWordID funcId)
+        {
+            if (node.Children.Count() > 0)
+            {
+                KeyWordTocken? funcName = node.Children[0].Tocken as KeyWordTocken;
+                if (funcName != null && funcName.ID == funcId)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         StringTocken? ExecuteStringExpression(TreeNode node)
@@ -216,8 +317,8 @@ namespace CInterpreter
                     }
 
                 }
-
             }
+            SaveExecuterError("Invalid args passed to function (Expected 1 int or string argument)", node.Tocken.row, node.Tocken.column);
             return false;
         }
 
@@ -230,11 +331,22 @@ namespace CInterpreter
                 {
                     return read.Read();
                 }
-
             }
+            SaveExecuterError("Invalid args passed to function (Expected 0 arguments)", node.Tocken.row, node.Tocken.column);
             return null;
         }
-        private Dictionary<int, int> intVars = new Dictionary<int, int>();
-        private InterpreterContext context;
+
+        private void SaveExecuterError(string message, int row, int column)
+        {
+            errorMessage = string.Format("Executer Error: {0} line: {1}, column: {2}", message, row, column);
+        }
+
+        public void dumpError(TextWriter output)
+        {
+            if (errorMessage.Length != 0)
+            {
+                output.WriteLine(errorMessage);
+            }
+        }
     }
 }

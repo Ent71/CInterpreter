@@ -1,5 +1,5 @@
 line: 1
-row: 0, column: 0 val: Statement
+row: 1, column: 1 val: Statement
 ..row: 1, column: 1 val: DeclarationStatement
 ....row: 1, column: 1 val: Int
 ....row: 1, column: 1 val: InitialisationList

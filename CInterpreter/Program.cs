@@ -4,7 +4,6 @@ namespace CInterpreter
 {
     class Program
     {
-
         static StreamReader? FileOpener(string path)
         {
             try
@@ -20,15 +19,16 @@ namespace CInterpreter
         static void Main(string[] args)
         {
             Console.WriteLine("Input file name:");
-            string? fileName = "D:\\2\\CInterpreter\\CInterpreter\\test.c"; // Console.ReadLine(); 
+            string? fileName = Console.ReadLine(); 
+            InterpreterContext context = new InterpreterContext();
+            Interpreter intr = new Interpreter(new Lexer(context), new Parser(context), new Executer(context , new ReadFromConsole(), new WriteToConsole()));
+
             if (fileName != null)
             {
                 using (StreamReader? sr = FileOpener((string)fileName))
                 {
                     if(sr != null)
                     {
-                        InterpreterContext context = new InterpreterContext();
-                        Interpreter intr = new Interpreter(new Lexer(context), new Parser(context), new Executer(context , new ReadFromConsole(), new WriteToConsole()));
                         Stream outputStream = Console.OpenStandardOutput();
                         intr.Run(sr);
                     }

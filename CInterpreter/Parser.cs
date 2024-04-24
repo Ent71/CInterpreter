@@ -3,30 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CInterpreter.Models;
 
 namespace CInterpreter
 {
     public class Parser : IParser
     {
+        private InterpreterContext context;
+        private List<string> errorMessages = new List<string>();
+        private IReadOnlyList<Tocken> TockenRow = new List<Tocken>();
+
         public Parser(InterpreterContext context)
         {
             this.context = context;
         }
-        private IReadOnlyList<Tocken> TockenRow = new List<Tocken>();
-        private int row;
+
+        public void Reset()
+        {
+            errorMessages.Clear();
+        }
+
         public TreeNode? ParseLine(IReadOnlyList<Tocken> tockenRow, int row)
         {
-            this.row = row;
+            errorMessages.Clear();
             TockenRow = tockenRow;
-            TreeNode root = new TreeNode(new ParserTocken(ParserTocken.ParserStages.Statement, 0, 0));
-            if (ParseStmt(root))
+            if(tockenRow.Count() > 0)
             {
-                return root;
+                TreeNode root = new TreeNode(new ParserTocken(ParserTocken.ParserStages.Statement, TockenRow[0].row, TockenRow[0].column));
+                if (ParseStmt(root))
+                {
+                    return root;
+                }
             }
             return null;
         }
 
-        public bool ParseStmt(TreeNode root)
+        private bool ParseStmt(TreeNode root)
         {
 
             int startPos = 0;
@@ -34,7 +46,7 @@ namespace CInterpreter
             {
                 return ParseDeclarationStmt(root, ref startPos);
             }
-            if (TockenRow.Count > 3 && (TockenRow[0] is IdentifierTocken || TockenRow[0] is KeyWordTocken) && TockenRow[1] is DelimeterTocken && ((DelimeterTocken)TockenRow[1]).delimeter == '(')
+            if (TockenRow.Count > 2 && (TockenRow[0] is IdentifierTocken || TockenRow[0] is KeyWordTocken) && TockenRow[1] is DelimeterTocken && ((DelimeterTocken)TockenRow[1]).delimeter == '(')
             {
                 return ParseFunctionStmt(root, ref startPos);
             }
@@ -42,11 +54,11 @@ namespace CInterpreter
             {
                 return ParseInitialisationStmt(root, ref startPos);
             }
-            Console.WriteLine("Parser Error: Expected statement on row: {0}, column {1}", TockenRow[startPos].row, TockenRow[startPos].column);
+            SaveParserError("Declaration, Initialization or Function Call", startPos);
             return false;
         }
 
-        bool ParseDeclarationStmt(TreeNode node, ref int pos)
+        private bool ParseDeclarationStmt(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -62,19 +74,19 @@ namespace CInterpreter
                             if (ParseDelimeter(';', ref pos))
                             {
                                 currentNode1.AddChild(currentNode);
+                                return true;
                             }
                         }
                     }
 
-                    return true;
                 }
 
             }
 
-
             return false;
         }
-        bool ParseInitialisationStmt(TreeNode node, ref int pos)
+
+        private bool ParseInitialisationStmt(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -93,30 +105,26 @@ namespace CInterpreter
                         }
                     }
                 }
-                return false;
             }
 
             return false;
         }
 
-        bool ParseFunctionStmt(TreeNode node, ref int pos)
+        private bool ParseFunctionStmt(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
                 TreeNode currentNode = new TreeNode(new ParserTocken(ParserTocken.ParserStages.ExpressionStatement, TockenRow[pos].row, TockenRow[pos].column));
-                TreeNode currentNode1 = new TreeNode(new ParserTocken(ParserTocken.ParserStages.Expression, TockenRow[pos].row, TockenRow[pos].column));
-                TreeNode currentNode2 = new TreeNode(new ParserTocken(ParserTocken.ParserStages.SimpleExpression, TockenRow[pos].row, TockenRow[pos].column));
-                currentNode.AddChild(currentNode1);
-                currentNode1.AddChild(currentNode2);
                 node.AddChild(currentNode);
-                return ParseFunction(currentNode2, ref pos) && ParseDelimeter(';', ref pos);
+                return ParseFunction(currentNode, ref pos) && ParseDelimeter(';', ref pos);
             }
+
             return false;
         }
 
-        bool ParseExpression(TreeNode node, ref int pos)
+        private bool ParseExpression(TreeNode node, ref int pos)
         {
-            if (TockenRow.Count - pos > 0)
+            if (TockenRow.Count - pos > 0 && (TockenRow[pos] is DigitTocken || TockenRow[pos] is KeyWordTocken || TockenRow[pos] is IdentifierTocken || TockenRow[pos] is StringTocken))
             {
                 TreeNode currentNode = new TreeNode(new ParserTocken(ParserTocken.ParserStages.Expression, TockenRow[pos].row, TockenRow[pos].column));
                 node.AddChild(currentNode);
@@ -129,20 +137,12 @@ namespace CInterpreter
                     return true;
                 }
             }
-            Console.WriteLine("Parser Error: Expected expresion on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
+
+            SaveParserError("Expression", pos);
             return false;
         }
 
-        bool ParseAttribute(TreeNode node, ref int pos)
-        {
-            if (!TryParseAttribute(node, ref pos))
-            {
-                Console.WriteLine("Parser Error: Expected attribute on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-                return false;
-            }
-            return true;
-        }
-        bool TryParseAttribute(TreeNode node, ref int pos)
+        private bool ParseAttribute(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -155,9 +155,10 @@ namespace CInterpreter
                     return true;
                 }
             }
+            SaveParserError("Type", pos);
             return false;
         }
-        bool ParseInitialisation(TreeNode node, ref int pos)
+        private bool ParseInitialisation(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -173,10 +174,10 @@ namespace CInterpreter
                 }
 
             }
-            Console.WriteLine("Parser Error: Expected initialiation on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
+            SaveParserError("Initialization", pos);
             return false;
         }
-        bool ParseInitialisationListRest(TreeNode node, ref int pos)
+        private bool ParseInitialisationListRest(TreeNode node, ref int pos)
         {
             int curPos = pos;
             bool isWork = true;
@@ -191,7 +192,6 @@ namespace CInterpreter
                     }
                     else
                     {
-                        Console.WriteLine("Parser Error: Expected initialiations on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
                         return false;
                     }
                 }
@@ -203,7 +203,7 @@ namespace CInterpreter
 
             return true;
         }
-        bool ParseSimpleExpression(TreeNode node, ref int pos)
+        private bool ParseSimpleExpression(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -225,11 +225,11 @@ namespace CInterpreter
                 }
             }
 
-            Console.WriteLine("Parser Error: Expected simple expression on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
+            SaveParserError("Simple Expression", pos);
             return false;
         }
 
-        bool ParseOperation(TreeNode node, ref int pos)
+        private bool ParseOperation(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -243,10 +243,11 @@ namespace CInterpreter
                 }
             }
 
-            Console.WriteLine("Parser Error: Expected operation on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
+            SaveParserError("Operation", pos);
             return false;
         }
-        bool ParseFunction(TreeNode node, ref int pos)
+
+        private bool ParseFunction(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0)
             {
@@ -255,11 +256,11 @@ namespace CInterpreter
                 return ParseIdOrKeyWord(currentNode, ref pos) && ParseDelimeter('(', ref pos) && ParseFunctionArguments(currentNode, ref pos) && ParseDelimeter(')', ref pos);
             }
 
-            Console.WriteLine("Parser Error: Expected function call on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-
+            SaveParserError("Function Call", pos);
             return false;
         }
-        bool ParseFunctionArguments(TreeNode node, ref int pos)
+
+        private bool ParseFunctionArguments(TreeNode node, ref int pos)
         {
             if (TockenRow.Count - pos > 0 && (!(TockenRow[pos] is DelimeterTocken) || ((DelimeterTocken)TockenRow[pos]).delimeter != ')'))
             {
@@ -272,7 +273,8 @@ namespace CInterpreter
 
             return true;
         }
-        bool ParseFunctionArgumentsListRest(TreeNode node, ref int pos)
+
+        private bool ParseFunctionArgumentsListRest(TreeNode node, ref int pos)
         {
             int curPos = pos;
             bool isWork = true;
@@ -287,8 +289,7 @@ namespace CInterpreter
                     }
                     else
                     {
-                        Console.WriteLine("Parser Error: Expected args on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-
+                        SaveParserError("Function Argument", pos);
                         return false;
                     }
                 }
@@ -302,7 +303,7 @@ namespace CInterpreter
             return true;
         }
 
-        bool ParseDelimeter(char delimeter, ref int pos)
+        private bool ParseDelimeter(char delimeter, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -313,35 +314,23 @@ namespace CInterpreter
                     pos++;
                     return true;
                 }
-                else
-                { 
-                    Console.WriteLine("Parser Error: Expected \'{0}\' on row: {1}, column {2}", delimeter, TockenRow[pos].row, TockenRow[pos].column);
-                }
             }
+            SaveParserError(string.Format("\'{0}\'", delimeter), pos);
             return false;
         }
 
-        bool ParseIdOrKeyWord(TreeNode node, ref int pos)
+        private bool ParseIdOrKeyWord(TreeNode node, ref int pos)
         {
             if (TryParseIdentifier(node, ref pos) || TryParseKeyWord(node, ref pos))
             {
                 return true;
             }
-            Console.WriteLine("Parser Error: id or kw on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
 
+            SaveParserError("Identifier or Keyword", pos);
             return false;
         }
 
-        bool ParseIdentifier(TreeNode node, ref int pos)
-        {
-            if (TryParseIdentifier(node, ref pos))
-            {
-                return true;
-            }
-            Console.WriteLine("Parser Error: id on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-            return false;
-        }
-        bool TryParseIdentifier(TreeNode node, ref int pos)
+        private bool TryParseIdentifier(TreeNode node, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -357,17 +346,7 @@ namespace CInterpreter
             return false;
         }
 
-        bool ParseKeyWord(TreeNode node, ref int pos)
-        {
-            if (TryParseKeyWord(node, ref pos))
-            {
-                return true;
-            }
-            Console.WriteLine("Parser Error: keyw on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-            return false;
-        }
-
-        bool TryParseKeyWord(TreeNode node, ref int pos)
+        private bool TryParseKeyWord(TreeNode node, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -383,7 +362,7 @@ namespace CInterpreter
             return false;
         }
 
-        bool ParseAssigment(TreeNode node, ref int pos)
+        private bool ParseAssigment(TreeNode node, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -396,12 +375,12 @@ namespace CInterpreter
                     return true;
                 }
             }
-            Console.WriteLine("Parser Error: Expected \'=\' on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
 
+            SaveParserError("\'=\'", pos);
             return false;
         }
 
-        bool ParseDigit(TreeNode node, ref int pos)
+        private bool ParseDigit(TreeNode node, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -415,12 +394,11 @@ namespace CInterpreter
                 }
             }
 
-            Console.WriteLine("Parser Error: Expected digit on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
-
+            SaveParserError("Number", pos);
             return false;
         }
 
-        bool ParseString(TreeNode node, ref int pos)
+        private bool ParseString(TreeNode node, ref int pos)
         {
 
             if (TockenRow.Count - pos > 0)
@@ -433,15 +411,46 @@ namespace CInterpreter
                     return true;
                 }
             }
-            Console.WriteLine("Parser Error: Expected string on row: {0}, column {1}", TockenRow[pos].row, TockenRow[pos].column);
 
-
+            SaveParserError("String", pos);
             return false;
         }
+
+        private void SaveParserError(string message, int pos)
+        {
+            int row = 1, column = 1;
+            
+            if(TockenRow.Count() > 1)
+            {
+                if(TockenRow.Count() - pos > 0 && TockenRow[pos].row == TockenRow[pos - 1].row)
+                {
+                    row = TockenRow[pos].row;
+                    column = TockenRow[pos].column;
+                }
+                else
+                {
+                    row = TockenRow[pos - 1].row;
+                    column = context.endOfRowPositions[row - 1];
+                }
+
+            }
+
+            errorMessages.Add(string.Format("Parser Error: Expected {0} on row: {1}, column {2}", message, row, column));
+        }
+
+        public void dumpError(TextWriter writer)
+        {
+            foreach(string message in errorMessages)
+            {
+                writer.WriteLine(message);
+            }
+        }
+
         public void DumpParserTree(TreeNode root, TextWriter writer)
         {
             DumpParserTreeHelper(root, writer, 0);
         }
+
         private void DumpParserTreeHelper(TreeNode node, TextWriter writer, int depth)
         {
             writer.Write(new string('.', depth * 2));
@@ -452,7 +461,5 @@ namespace CInterpreter
                 DumpParserTreeHelper(child, writer, depth + 1);
             }
         }
-
-        private InterpreterContext context;
     }
 }

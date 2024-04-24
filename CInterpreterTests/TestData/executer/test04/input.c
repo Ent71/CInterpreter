@@ -1,0 +1,12 @@
+Write("Input 3 numbers:");
+int i, j, k;
+i = Read();
+j = Read();
+k = Read();
+int result;
+result = i + k;
+Write(i);
+result = result * k;
+Write(j);
+Write(k);
+Write(result);

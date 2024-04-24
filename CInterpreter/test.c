@@ -1,12 +1,5 @@
-Write("Input 3 numbers:");
-int i, j, k;
-i = Read();
-j = Read();
-k = Read();
-int result;
-result = i + k;
-Write(i);
-result = result * k;
-Write(j);
-Write(k);
-Write(result);
+int i1, i2;
+Write("Input 2 numbers:");
+i1 = Read();
+i2 = Read();
+Write(i1 + i2);

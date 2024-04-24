@@ -1,0 +1,1 @@
+Parser Error: Expected Declaration, Initialization or Function Call on row: 1, column 1

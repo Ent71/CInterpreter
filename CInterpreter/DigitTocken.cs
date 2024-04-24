@@ -14,7 +14,6 @@ namespace CInterpreter
             digitValue = val;
         }
 
-        // public int DigitValue { get; }
         public readonly int digitValue;
     }
 }
